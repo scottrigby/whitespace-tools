@@ -32,3 +32,11 @@ These two commands are in a `.zshrc` file in this workspace, for reference.
 zsh/shell commands work well, but I would like something that can be more portable, easier to maintain, and easier to import into agent environments. 
 
 I have started a Go port - files in this workspace - but it is not yet functional. Experimenting to see if AI codegen can improve this. If nothing else, the prompting forces me to outline my requirements.
+
+## Testing
+
+go test should be at least as robust as `newline_test` from `.zshrc` in this workspace.
+
+## Makefile
+
+Write a simple Makefile with targets to test and compile Go.
