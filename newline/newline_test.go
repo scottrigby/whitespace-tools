@@ -6,13 +6,36 @@ import (
 	"testing"
 )
 
-func TestProcess(t *testing.T) {
-	tmpDir, err := os.MkdirTemp("", "testnewline")
+// countLines counts newline characters in files within a directory (like wc -l)
+func countLines(t *testing.T, dir string) map[string]int {
+	t.Helper()
+	result := map[string]int{}
+	entries, err := os.ReadDir(dir)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("failed to read directory %s: %v", dir, err)
 	}
-	defer os.RemoveAll(tmpDir)
+	for _, e := range entries {
+		if e.IsDir() {
+			continue
+		}
+		content, err := os.ReadFile(filepath.Join(dir, e.Name()))
+		if err != nil {
+			t.Fatalf("failed to read file %s: %v", e.Name(), err)
+		}
+		lines := 0
+		for _, b := range content {
+			if b == '\n' {
+				lines++
+			}
+		}
+		result[e.Name()] = lines
+	}
+	return result
+}
 
+// createTestDirStructure creates a test directory structure with sample files
+func createTestDirStructure(t *testing.T, tmpDir string) {
+	t.Helper()
 	testDirs := []string{
 		"testdir",
 		"testdir/.hiddendir",
@@ -37,6 +60,16 @@ func TestProcess(t *testing.T) {
 			}
 		}
 	}
+}
+
+func TestProcess(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "testnewline")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	createTestDirStructure(t, tmpDir)
 
 	// Run on testdir and testdir/.hiddendir
 	if err := Process(filepath.Join(tmpDir, "testdir")); err != nil {
@@ -46,28 +79,8 @@ func TestProcess(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Helper to count lines in all files in a dir (like wc -l)
-	countLines := func(dir string) map[string]int {
-		result := map[string]int{}
-		entries, _ := os.ReadDir(dir)
-		for _, e := range entries {
-			if e.IsDir() {
-				continue
-			}
-			content, _ := os.ReadFile(filepath.Join(dir, e.Name()))
-			lines := 0
-			for _, b := range content {
-				if b == '\n' {
-					lines++
-				}
-			}
-			result[e.Name()] = lines
-		}
-		return result
-	}
-
 	// Check root of testdir
-	lines := countLines(filepath.Join(tmpDir, "testdir"))
+	lines := countLines(t, filepath.Join(tmpDir, "testdir"))
 	for _, n := range lines {
 		if n != 1 {
 			t.Errorf("testdir: expected 1 line, got %d", n)
@@ -75,7 +88,7 @@ func TestProcess(t *testing.T) {
 	}
 
 	// Check root of testdir/subdir
-	lines = countLines(filepath.Join(tmpDir, "testdir/subdir"))
+	lines = countLines(t, filepath.Join(tmpDir, "testdir/subdir"))
 	for _, n := range lines {
 		if n != 1 {
 			t.Errorf("testdir/subdir: expected 1 line, got %d", n)
@@ -83,7 +96,7 @@ func TestProcess(t *testing.T) {
 	}
 
 	// Check root of testdir/.hiddendir
-	lines = countLines(filepath.Join(tmpDir, "testdir/.hiddendir"))
+	lines = countLines(t, filepath.Join(tmpDir, "testdir/.hiddendir"))
 	for _, n := range lines {
 		if n != 1 {
 			t.Errorf("testdir/.hiddendir: expected 1 line, got %d", n)
@@ -91,7 +104,7 @@ func TestProcess(t *testing.T) {
 	}
 
 	// Check testdir/.hiddendir/.deephidden (should NOT be processed)
-	lines = countLines(filepath.Join(tmpDir, "testdir/.hiddendir/.deephidden"))
+	lines = countLines(t, filepath.Join(tmpDir, "testdir/.hiddendir/.deephidden"))
 	expected := map[string]int{
 		"empty.txt":           0,
 		"newline.txt":         1,
@@ -106,7 +119,7 @@ func TestProcess(t *testing.T) {
 	}
 
 	// Check testdir/subdir/.subhidden (should NOT be processed)
-	lines = countLines(filepath.Join(tmpDir, "testdir/subdir/.subhidden"))
+	lines = countLines(t, filepath.Join(tmpDir, "testdir/subdir/.subhidden"))
 	for name, want := range expected {
 		if got := lines[name]; got != want {
 			t.Errorf("testdir/subdir/.subhidden: %s expected %d lines, got %d", name, want, got)
@@ -121,59 +134,16 @@ func TestProcessWithHiddenOption(t *testing.T) {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	testDirs := []string{
-		"testdir",
-		"testdir/.hiddendir",
-		"testdir/subdir",
-		"testdir/.hiddendir/.deephidden",
-		"testdir/subdir/.subhidden",
-	}
-	for _, d := range testDirs {
-		if err := os.MkdirAll(filepath.Join(tmpDir, d), 0o755); err != nil {
-			t.Fatal(err)
-		}
-		files := map[string][]byte{
-			"empty.txt":           {},
-			"newline.txt":         []byte("\n"),
-			"extra-newline.txt":   []byte("\n\n"),
-			"content.txt":         []byte("content"),
-			"content-newline.txt": []byte("content\n"),
-		}
-		for name, content := range files {
-			if err := os.WriteFile(filepath.Join(tmpDir, d, name), content, 0o644); err != nil {
-				t.Fatal(err)
-			}
-		}
-	}
+	createTestDirStructure(t, tmpDir)
 
 	// Run on testdir with IncludeHidden=true
 	if err := ProcessWithOptions(filepath.Join(tmpDir, "testdir"), Options{IncludeHidden: true}); err != nil {
 		t.Fatal(err)
 	}
 
-	// Helper to count lines in all files in a dir (like wc -l)
-	countLines := func(dir string) map[string]int {
-		result := map[string]int{}
-		entries, _ := os.ReadDir(dir)
-		for _, e := range entries {
-			if e.IsDir() {
-				continue
-			}
-			content, _ := os.ReadFile(filepath.Join(dir, e.Name()))
-			lines := 0
-			for _, b := range content {
-				if b == '\n' {
-					lines++
-				}
-			}
-			result[e.Name()] = lines
-		}
-		return result
-	}
-
 	// With IncludeHidden=true, ALL directories should be processed
 	// So all files should have exactly 1 line
-	testDirs = []string{
+	testDirs := []string{
 		"testdir",
 		"testdir/.hiddendir",
 		"testdir/subdir",
@@ -182,7 +152,7 @@ func TestProcessWithHiddenOption(t *testing.T) {
 	}
 
 	for _, dir := range testDirs {
-		lines := countLines(filepath.Join(tmpDir, dir))
+		lines := countLines(t, filepath.Join(tmpDir, dir))
 		for name, got := range lines {
 			if got != 1 {
 				t.Errorf("%s: %s expected 1 line (processed), got %d", dir, name, got)
