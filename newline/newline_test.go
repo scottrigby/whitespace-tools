@@ -113,3 +113,80 @@ func TestProcess(t *testing.T) {
 		}
 	}
 }
+
+func TestProcessWithHiddenOption(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "testnewlinehidden")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	testDirs := []string{
+		"testdir",
+		"testdir/.hiddendir",
+		"testdir/subdir",
+		"testdir/.hiddendir/.deephidden",
+		"testdir/subdir/.subhidden",
+	}
+	for _, d := range testDirs {
+		if err := os.MkdirAll(filepath.Join(tmpDir, d), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		files := map[string][]byte{
+			"empty.txt":           {},
+			"newline.txt":         []byte("\n"),
+			"extra-newline.txt":   []byte("\n\n"),
+			"content.txt":         []byte("content"),
+			"content-newline.txt": []byte("content\n"),
+		}
+		for name, content := range files {
+			if err := os.WriteFile(filepath.Join(tmpDir, d, name), content, 0o644); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
+
+	// Run on testdir with IncludeHidden=true
+	if err := ProcessWithOptions(filepath.Join(tmpDir, "testdir"), Options{IncludeHidden: true}); err != nil {
+		t.Fatal(err)
+	}
+
+	// Helper to count lines in all files in a dir (like wc -l)
+	countLines := func(dir string) map[string]int {
+		result := map[string]int{}
+		entries, _ := os.ReadDir(dir)
+		for _, e := range entries {
+			if e.IsDir() {
+				continue
+			}
+			content, _ := os.ReadFile(filepath.Join(dir, e.Name()))
+			lines := 0
+			for _, b := range content {
+				if b == '\n' {
+					lines++
+				}
+			}
+			result[e.Name()] = lines
+		}
+		return result
+	}
+
+	// With IncludeHidden=true, ALL directories should be processed
+	// So all files should have exactly 1 line
+	testDirs = []string{
+		"testdir",
+		"testdir/.hiddendir",
+		"testdir/subdir",
+		"testdir/.hiddendir/.deephidden",
+		"testdir/subdir/.subhidden",
+	}
+
+	for _, dir := range testDirs {
+		lines := countLines(filepath.Join(tmpDir, dir))
+		for name, got := range lines {
+			if got != 1 {
+				t.Errorf("%s: %s expected 1 line (processed), got %d", dir, name, got)
+			}
+		}
+	}
+}
