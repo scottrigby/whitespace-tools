@@ -40,3 +40,17 @@ go test should be at least as robust as `newline_test` from `.zshrc` in this wor
 ## Makefile
 
 Write a simple Makefile with targets to test and compile Go.
+
+## Process
+
+Running Claude in a container, using this simple project: https://github.com/scottrigby/claude-container
+
+Enabling YOLO mode.
+
+Work until either clarification is needed, or tasks are complete.
+
+A script in your PATH is provided called `notify.sh`.
+
+When clarification is needed: Send notification when clarification needed: `notify.sh "Need clarification: reason"`
+
+For task completion: Send audio notification: `notify.sh "completion message"`
