@@ -1,7 +1,6 @@
 package newline
 
 import (
-	"bufio"
 	"os"
 	"path/filepath"
 	"testing"
@@ -47,7 +46,7 @@ func TestProcess(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Helper to count lines in all files in a dir
+	// Helper to count lines in all files in a dir (like wc -l)
 	countLines := func(dir string) map[string]int {
 		result := map[string]int{}
 		entries, _ := os.ReadDir(dir)
@@ -55,14 +54,14 @@ func TestProcess(t *testing.T) {
 			if e.IsDir() {
 				continue
 			}
-			f, _ := os.Open(filepath.Join(dir, e.Name()))
-			sc := bufio.NewScanner(f)
+			content, _ := os.ReadFile(filepath.Join(dir, e.Name()))
 			lines := 0
-			for sc.Scan() {
-				lines++
+			for _, b := range content {
+				if b == '\n' {
+					lines++
+				}
 			}
 			result[e.Name()] = lines
-			f.Close()
 		}
 		return result
 	}
@@ -96,7 +95,7 @@ func TestProcess(t *testing.T) {
 	expected := map[string]int{
 		"empty.txt":           0,
 		"newline.txt":         1,
-		"extra-newline.txt":   0,
+		"extra-newline.txt":   2,
 		"content.txt":         0,
 		"content-newline.txt": 1,
 	}

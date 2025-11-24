@@ -58,28 +58,27 @@ func Process(target string) error {
 
 // processDir processes all files in dir, skipping hidden subdirs unless dir itself is hidden.
 func processDir(dir string) error {
-	if isHidden(dir) {
-		return filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
-			if err != nil {
-				return err
-			}
-			if d.IsDir() {
-				return nil
-			}
-			return ensureSingleNewline(path)
-		})
-	}
 	return filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
-		rel, _ := filepath.Rel(dir, path)
-		if d.IsDir() && rel != "." && isHidden(d.Name()) {
-			return filepath.SkipDir
+
+		// If this is a directory, check if we should skip it
+		if d.IsDir() {
+			// Don't skip the root directory
+			if path == dir {
+				return nil
+			}
+
+			// Always skip hidden subdirectories (even if parent is hidden)
+			if isHidden(d.Name()) {
+				return filepath.SkipDir
+			}
+
+			return nil
 		}
-		if !d.IsDir() {
-			return ensureSingleNewline(path)
-		}
-		return nil
+
+		// Process the file
+		return ensureSingleNewline(path)
 	})
 }
