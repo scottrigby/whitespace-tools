@@ -54,3 +54,20 @@ test-newline() {
 
   cd "$orig_dir"
 }
+
+trailingspace() {
+  local target="${1:-.}"
+  remove_trailing_space() {
+    perl -pe 's/[ \t]+$//' -- "$1" > "$1.tmp" && cat "$1.tmp" > "$1" && rm -f "$1.tmp"
+  }
+  if [ -f "$target" ]; then
+    remove_trailing_space "$target"
+  elif [ -d "$target" ]; then
+    find "$target" -mindepth 1 -type d -name '.*' -prune -o -type f -exec sh -c '
+      perl -pe "s/[ \\t]+\$//" -- "$1" > "$1.tmp" && cat "$1.tmp" > "$1" && rm -f "$1.tmp"
+    ' _ {} \;
+  else
+    echo "Error: $target is not a file or directory" >&2
+    return 1
+  fi
+}

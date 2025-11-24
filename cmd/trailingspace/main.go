@@ -19,7 +19,7 @@ func main() {
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage: %s [OPTIONS] [target]\n", os.Args[0])
-		fmt.Fprintf(os.Stderr, "\nEnsures files end with exactly one newline.\n\n")
+		fmt.Fprintf(os.Stderr, "\nRemoves trailing whitespace from end of lines.\n\n")
 		fmt.Fprintf(os.Stderr, "OPTIONS:\n")
 		fmt.Fprintf(os.Stderr, "  -i, --include-hidden\tProcess files in hidden directories recursively\n")
 		fmt.Fprintf(os.Stderr, "  -e, --exclude PATTERN\tExclude files/directories matching glob pattern\n")
@@ -28,7 +28,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "\nBEHAVIOR:\n")
 		fmt.Fprintf(os.Stderr, "  Processes all text files recursively, skipping:\n")
 		fmt.Fprintf(os.Stderr, "  • Hidden directories (unless --include-hidden used)\n")
-		fmt.Fprintf(os.Stderr, "  • Non-text files (detected by MIME type)\n")
+		fmt.Fprintf(os.Stderr, "  • Non-text files (detected by heuristic)\n")
 		fmt.Fprintf(os.Stderr, "  • Files/directories matching --exclude patterns\n\n")
 		fmt.Fprintf(os.Stderr, "\nEXAMPLES:\n")
 		fmt.Fprintf(os.Stderr, "  %s file.txt                    # Process single file\n", os.Args[0])
@@ -53,7 +53,7 @@ func main() {
 		ExcludePatterns: []string(excludePatterns),
 	}
 
-	if err := whitespace.ProcessNewlineWithOptions(target, opts); err != nil {
+	if err := whitespace.ProcessTrailingspaceWithOptions(target, opts); err != nil {
 		fmt.Fprintln(os.Stderr, "Error:", err)
 		os.Exit(1)
 	}

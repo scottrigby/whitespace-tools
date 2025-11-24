@@ -1,6 +1,6 @@
 version: 2
 
-project_name: newline
+project_name: whitespace-tools
 
 before:
   hooks:
@@ -8,8 +8,8 @@ before:
     - go generate ./...
 
 builds:
-  # Optimized Go build
-  - id: "go-build"
+  # newline CLI tool
+  - id: "newline"
     main: ./cmd/newline
     binary: newline
     env:
@@ -19,7 +19,21 @@ builds:
     goos:
       - linux
       - darwin
-      - windows
+    goarch:
+      - amd64
+      - arm64
+
+  # trailingspace CLI tool
+  - id: "trailingspace"
+    main: ./cmd/trailingspace
+    binary: trailingspace
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -s -w -buildid=
+    goos:
+      - linux
+      - darwin
     goarch:
       - amd64
       - arm64

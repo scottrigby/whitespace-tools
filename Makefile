@@ -1,10 +1,11 @@
 .PHONY: test build build-full build-tiny clean install fmt vet check all default release-snapshot release
 
-# Build binary (prefers TinyGo if available)
+# Build all binaries (prefers TinyGo if available)
 build:
 	@if command -v tinygo >/dev/null 2>&1; then \
 		tinygo build -o bin/newline ./cmd/newline; \
-		echo "TinyGo binary created: bin/newline"; \
+		tinygo build -o bin/trailingspace ./cmd/trailingspace; \
+		echo "TinyGo binaries created: bin/newline bin/trailingspace"; \
 	else \
 		echo "TinyGo not found, using standard Go build"; \
 		$(MAKE) build-full; \
@@ -13,12 +14,14 @@ build:
 # Build with standard Go (larger but full compatibility)
 build-full:
 	CGO_ENABLED=0 go build -ldflags="-s -w -buildid=" -o bin/newline ./cmd/newline
+	CGO_ENABLED=0 go build -ldflags="-s -w -buildid=" -o bin/trailingspace ./cmd/trailingspace
 
-# Build with tinygo (much smaller binary)
+# Build with tinygo (much smaller binaries)
 build-tiny:
 	@if command -v tinygo >/dev/null 2>&1; then \
 		tinygo build -o bin/newline-tiny ./cmd/newline; \
-		echo "TinyGo binary created: bin/newline-tiny"; \
+		tinygo build -o bin/trailingspace-tiny ./cmd/trailingspace; \
+		echo "TinyGo binaries created: bin/newline-tiny bin/trailingspace-tiny"; \
 	else \
 		echo "Error: TinyGo not found. Install from https://tinygo.org/getting-started/install/"; \
 		exit 1; \
