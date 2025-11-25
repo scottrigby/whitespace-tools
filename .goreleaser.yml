@@ -9,7 +9,7 @@ before:
 
 builds:
   # newline CLI tool
-  - id: "newline"
+  - id: newline
     main: ./cmd/newline
     binary: newline
     tool: tinygo
@@ -24,7 +24,7 @@ builds:
       - -X main.commit={{ .Commit }}
 
   # trailingspace CLI tool
-  - id: "trailingspace"
+  - id: trailingspace
     main: ./cmd/trailingspace
     binary: trailingspace
     tool: tinygo
@@ -64,15 +64,19 @@ changelog:
 release:
   github:
     owner: scottrigby
-    name: newline
+    name: whitespace-tools
   name_template: "Release {{.Version}}"
+  prerelease: auto
 
 # Homebrew cask (for distributing prebuilt binaries)
 homebrew_casks:
   - repository:
       owner: scottrigby
       name: homebrew-tap
-    name: newline
-    description: "CLI tool to ensure files end with exactly one newline"
-    homepage: "https://github.com/scottrigby/newline"
-    license: "MIT"
+    name: whitespace-tools
+    description: CLI tools to fix Git whitespace issues
+    homepage: "https://github.com/scottrigby/whitespace-tools"
+    license: Apache-2.0
+    binaries:
+      - newline
+      - trailingspace
