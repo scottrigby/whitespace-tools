@@ -34,6 +34,9 @@ newline --exclude 'node_modules' --exclude '*.tmp' .
 ## Installation
 
 ```bash
+# Homebrew (macOS)
+brew install scottrigby/tap/whitespace-tools
+
 # From release
 curl -sLO https://github.com/scottrigby/whitespace-tools/releases/latest/download/whitespace-tools_linux_amd64.tar.gz
 
