@@ -7,6 +7,10 @@ before:
     - go mod tidy
     - go generate ./...
 
+git:
+  tag_sort: -version:creatordate # enforces SemVer precedence first, then uses tag creation time to break ties
+  prerelease_suffix: "-"
+
 builds:
   # newline CLI tool
   - id: newline
