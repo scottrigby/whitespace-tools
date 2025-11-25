@@ -24,12 +24,12 @@ func (m *mockProcessor) reset() {
 // createTestFileStructure creates a comprehensive test directory structure
 func createTestFileStructure(t *testing.T, tmpDir string) {
 	t.Helper()
-	
+
 	// Directory structure to create
 	testDirs := []string{
 		"testdir",
 		"testdir/.hiddendir",
-		"testdir/subdir", 
+		"testdir/subdir",
 		"testdir/.hiddendir/.deephidden",
 		"testdir/subdir/.subhidden",
 		"testdir/bin",           // for exclude pattern testing
@@ -46,7 +46,7 @@ func createTestFileStructure(t *testing.T, tmpDir string) {
 	files := map[string][]byte{
 		"text.txt":      []byte("text content\n"),
 		"code.go":       []byte("package main\n"),
-		"readme.md":     []byte("# README\n"), 
+		"readme.md":     []byte("# README\n"),
 		"config.json":   []byte("{}\n"),
 		"script.sh":     []byte("#!/bin/bash\n"),
 		"data.tmp":      []byte("temp data\n"),    // for exclude testing
@@ -119,7 +119,7 @@ func TestFileSelection_DirectoryDefault(t *testing.T) {
 	expectedDirs := []string{
 		"testdir",
 		"testdir/subdir",
-		"testdir/bin", 
+		"testdir/bin",
 		"testdir/build",
 	}
 
@@ -244,7 +244,7 @@ func TestFileSelection_ExcludePatterns(t *testing.T) {
 
 	// Should process files in testdir/ and testdir/subdir/ but exclude:
 	// - *.tmp files
-	// - *.log files  
+	// - *.log files
 	// - bin directory
 	// - build directory
 	expectedDirs := []string{
@@ -330,7 +330,7 @@ func TestFileSelection_CombinedOptions(t *testing.T) {
 	// - bin directory
 	expectedDirs := []string{
 		"testdir",
-		"testdir/.hiddendir", 
+		"testdir/.hiddendir",
 		"testdir/subdir",
 		"testdir/.hiddendir/.deephidden",
 		"testdir/subdir/.subhidden",
@@ -369,7 +369,7 @@ func TestFileSelection_BinaryFileDetection(t *testing.T) {
 	// Create text and binary files
 	textFile := filepath.Join(tmpDir, "text.txt")
 	binaryFile := filepath.Join(tmpDir, "binary.bin")
-	
+
 	if err := os.WriteFile(textFile, []byte("hello world\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}

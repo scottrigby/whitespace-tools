@@ -12,31 +12,31 @@ builds:
   - id: "newline"
     main: ./cmd/newline
     binary: newline
-    env:
-      - CGO_ENABLED=0
-    ldflags:
-      - -s -w -buildid=
+    tool: tinygo
     goos:
       - linux
       - darwin
     goarch:
       - amd64
       - arm64
+    ldflags:
+      - -X main.version={{ .Version }}
+      - -X main.commit={{ .Commit }}
 
   # trailingspace CLI tool
   - id: "trailingspace"
     main: ./cmd/trailingspace
     binary: trailingspace
-    env:
-      - CGO_ENABLED=0
-    ldflags:
-      - -s -w -buildid=
+    tool: tinygo
     goos:
       - linux
       - darwin
     goarch:
       - amd64
       - arm64
+    ldflags:
+      - -X main.version={{ .Version }}
+      - -X main.commit={{ .Commit }}
 
 archives:
   - name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"

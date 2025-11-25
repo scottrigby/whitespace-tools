@@ -13,7 +13,7 @@ func createTrailingspaceTestFile(t *testing.T, content string) string {
 		t.Fatal(err)
 	}
 	defer tmpFile.Close()
-	
+
 	if err := os.WriteFile(tmpFile.Name(), []byte(content), 0o644); err != nil {
 		t.Fatal(err)
 	}

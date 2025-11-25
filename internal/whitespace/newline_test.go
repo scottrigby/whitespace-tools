@@ -13,7 +13,7 @@ func createTestFile(t *testing.T, content []byte) string {
 		t.Fatal(err)
 	}
 	defer tmpFile.Close()
-	
+
 	if err := os.WriteFile(tmpFile.Name(), content, 0o644); err != nil {
 		t.Fatal(err)
 	}

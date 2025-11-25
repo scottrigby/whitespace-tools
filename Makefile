@@ -2,25 +2,33 @@
 
 # Build all binaries (prefers TinyGo if available)
 build:
-	@if command -v tinygo >/dev/null 2>&1; then \
-		tinygo build -o bin/newline ./cmd/newline; \
-		tinygo build -o bin/trailingspace ./cmd/trailingspace; \
-		echo "TinyGo binaries created: bin/newline bin/trailingspace"; \
+	@VERSION=$$(git describe --tags --abbrev=0 2>/dev/null || echo "0.0.0"); \
+	COMMIT=$$(git rev-parse --short HEAD); \
+	if command -v tinygo >/dev/null 2>&1; then \
+		VERSION=$$VERSION COMMIT=$$COMMIT $(MAKE) build-tiny; \
 	else \
 		echo "TinyGo not found, using standard Go build"; \
-		$(MAKE) build-full; \
+		VERSION=$$VERSION COMMIT=$$COMMIT $(MAKE) build-full; \
 	fi
 
 # Build with standard Go (larger but full compatibility)
 build-full:
-	CGO_ENABLED=0 go build -ldflags="-s -w -buildid=" -o bin/newline ./cmd/newline
-	CGO_ENABLED=0 go build -ldflags="-s -w -buildid=" -o bin/trailingspace ./cmd/trailingspace
+	CGO_ENABLED=0 go build \
+	-ldflags="-s -w -buildid= -X main.version=$${VERSION} -X main.commit=$${COMMIT}" \
+	-o bin/newline ./cmd/newline
+	CGO_ENABLED=0 go build \
+	-ldflags="-s -w -buildid= -X main.version=$${VERSION} -X main.commit=$${COMMIT}" \
+	-o bin/trailingspace ./cmd/trailingspace
 
 # Build with tinygo (much smaller binaries)
 build-tiny:
 	@if command -v tinygo >/dev/null 2>&1; then \
-		tinygo build -o bin/newline-tiny ./cmd/newline; \
-		tinygo build -o bin/trailingspace-tiny ./cmd/trailingspace; \
+		tinygo build -o bin/newline \
+		-ldflags="-X main.version=$$VERSION -X main.commit=$$COMMIT" \
+		./cmd/newline; \
+		tinygo build -o bin/trailingspace \
+		-ldflags="-X main.version=$$VERSION -X main.commit=$$COMMIT" \
+		./cmd/trailingspace; \
 		echo "TinyGo binaries created: bin/newline-tiny bin/trailingspace-tiny"; \
 	else \
 		echo "Error: TinyGo not found. Install from https://tinygo.org/getting-started/install/"; \
