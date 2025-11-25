@@ -1,90 +1,155 @@
-# newline CLI tool
+# Whitespace Tools - Development & Testing Guide
 
-## Problem
+## Requirements
 
-AI agents often do not ensure a single newline at EOF, even when asked.
+### newline CLI tool
+
+Problem: AI agents often do not ensure a single newline at EOF, even when asked.
 
 Why this matters: a single newline at EOF corresponds to Git's default core.whitespace blank-at-eof option.
 
-## User story
+Tool requirements:
+- The ability to rewrite a file so it ends with exactly one newline
+- The ability to process a file or all files recursively in an entire directory
+- When processing all files in dir, skip hidden subdirs unless dir itself is hidden, or unless the option to process all hidden dirs is explicitly opted-into
 
-As a developer who works mostly on the command line, I want a tool that AI agents can call to ensure a single newline at EOF of any files I wish.
+### trailingspace CLI tool
 
-I want to control which files this is applied to. This can be handled by rules in AGENTS.md, and/or be part of specific prompts.
-
-While there are many tools that have built-in support to ensure this (see https://github.com/editorconfig/editorconfig/wiki/Newline-at-End-of-File-Support), having a CLI tool that I can expose to AI agents or use myself as needed seems to be the most flexible solution when working primarily on the command line.
-
-## Tool requirements
-
-- The ability to rewrite a file so it ends with exactly one newline.
-- The ability to processes a file or all files recursively in an entire directory.
-- When processing all files in dir, I want to skip hidden subdirs unless dir itself is hidden, or unless the option to process all hidden dirs is explicitly opted-into.
-
-## Reference
-
-I created a zsh command `newline` that does exactly what I want.
-I also created a zsh command `newline_test` that tests exactly the requirements above, except I did not yet include a way to opt-into recursive hidden dirs.
-
-These two commands are in a `.zshrc` file in this workspace, for reference.
-
-## Rewrite these in Go
-
-zsh/shell commands work well, but I would like something that can be more portable, easier to maintain, and easier to import into agent environments.
-
-I have started a Go port - files in this workspace - but it is not yet functional. Experimenting to see if AI codegen can improve this. If nothing else, the prompting forces me to outline my requirements.
-
-## Testing
-
-go test should be at least as robust as `newline_test` from `.zshrc` in this workspace.
-
-## Makefile
-
-Write a simple Makefile with targets to test and compile Go.
-
-## trailingspace CLI tool
-
-### Problem
-
-AI agents often leave trailing whitespace at the end of lines, even when asked not to.
+Problem: AI agents often leave trailing whitespace at the end of lines, even when asked not to.
 
 Why this matters: trailing whitespace at end-of-line corresponds to Git's default core.whitespace blank-at-eol option.
 
-### User story
+Tool requirements:
+- The ability to rewrite files to remove trailing spaces and tabs from the end of each line
+- The ability to process a file or all files recursively in an entire directory
+- When processing all files in dir, skip hidden subdirs unless dir itself is hidden, or unless the option to process all hidden dirs is explicitly opted-into
+- Should preserve file content otherwise (no changes to line endings or other whitespace)
 
-As a developer who works mostly on the command line, I want a tool that AI agents can call to remove trailing whitespace from any files I wish.
+### Shared Requirements
 
-I want to control which files this is applied to. This can be handled by rules in AGENTS.md, and/or be part of specific prompts.
-
-### Tool requirements
-
-- The ability to rewrite files to remove trailing spaces and tabs from the end of each line.
-- The ability to process a file or all files recursively in an entire directory.
-- When processing all files in dir, skip hidden subdirs unless dir itself is hidden, or unless the option to process all hidden dirs is explicitly opted-into.
-- Should preserve file content otherwise (no changes to line endings or other whitespace).
-
-### Reference
-
-I created a zsh command `trailingspace` that does exactly what I want, located in `.zshrc` in this workspace.
-
-The logic:
-- Uses `perl -pe 's/[ \t]+$//'` to remove trailing spaces and tabs from each line
-- Same directory traversal behavior as newline tool
-- Creates temporary files for safe atomic updates
-
-### Implementation
-
-- Part of monorepo with newline CLI tool
-- Similar architecture and patterns as newline
-- Should support same `--hidden` flag for processing hidden directories
+- Part of monorepo with shared architecture and patterns
+- Support same `--include-hidden` flag for processing hidden directories
+- Support `--exclude` patterns for glob-based exclusion
 - Both tools released together, installable as a suite
+- TinyGo optimization for smaller binaries when available
 
-## Process
+## Development
+
+### Project Structure
+```
+├── cmd/                    # CLI entry points
+│   ├── newline/
+│   └── trailingspace/
+├── internal/               # Shared libraries
+│   ├── whitespace/         # Core processing logic
+│   └── cli/                # CLI utilities
+├── .goreleaser.yml         # Cross-platform releases
+└── Makefile                # Build automation
+```
+
+### Build System
+
+```bash
+# Run tests
+make test
+
+# Build binaries (uses TinyGo if available, falls back to Go)
+make build
+
+# Build with standard Go
+make build-full
+
+# Build with TinyGo (smaller binaries)
+make build-tiny
+
+# Cross-platform development build
+make release-snapshot
+
+# Format and check code
+make check
+```
+
+### Version and Environment Variables
+
+The Makefile handles version injection:
+- `VERSION`: Git tag or "dev" fallback
+- `COMMIT`: Git commit hash or "unknown" fallback
+- `GORELEASER_PARALLELISM`: Configurable parallelism (default: 4)
+
+Both tools support `--version` flag showing version and commit information.
+
+## Testing
+
+### Test Architecture
+
+Tests are organized into three categories:
+
+1. **File Selection Tests** (`common_test.go`):
+   - Single file vs directory processing
+   - Hidden directory handling (default skip vs --include-hidden)
+   - Exclusion pattern matching (--exclude patterns)
+   - Binary file detection and skipping
+
+2. **Newline EOF Tests** (`newline_test.go`):
+   - Empty files, content without newlines, multiple trailing newlines
+   - CRLF/mixed line endings, files ending with CR only
+   - Multiline content variations
+   - Edge cases and integration tests
+
+3. **Trailing Whitespace EOL Tests** (`trailingspace_test.go`):
+   - Single/multiple spaces and tabs at end of lines with content
+   - Lines with only whitespace (should become empty lines)
+   - Whitespace at EOF (with/without newlines)
+   - Preserved: leading/internal spaces and tabs
+   - Complex scenarios and edge cases
+
+### Running Tests
+
+```bash
+# Run all tests
+make test
+
+# Run with verbose output
+make test-verbose
+
+# Run specific test categories
+go test ./internal/whitespace -run TestFileSelection
+go test ./internal/whitespace -run TestEnsureSingleNewline
+go test ./internal/whitespace -run TestRemoveTrailingWhitespace
+```
+
+### Test Coverage
+
+Tests cover:
+- All CLI flag combinations
+- Directory traversal logic with various exclusion patterns
+- Text vs binary file detection
+- Atomic file update safety
+- Error handling and edge cases
+- Cross-platform compatibility (line endings, file permissions)
+
+### Reference Implementation
+
+Original zsh implementations are available in `.zshrc` for reference:
+- `newline`: Ensures single newline at EOF
+- `trailingspace`: Uses `perl -pe 's/[ \t]+$//'` to remove trailing whitespace
+- `newline_test`: Test suite for validation
+
+The Go implementation should be at least as robust as these shell commands while providing better portability and performance.
+
+### Process
 
 Running Claude in a container, using this simple project: https://github.com/scottrigby/claude-container
 
 Enabling YOLO mode.
 
 Work until either clarification is needed, or tasks are complete.
+
+**Important Development Rules:**
+1. **Test your work**: Run `make test` after every change to ensure tests pass
+2. **Validate at each step**: Ensure tests meet requirements before proceeding
+3. **Use the tools**: Always run `trailingspace .` and `newline .` on the codebase after making changes (use the last known working version of the tools; if unsure which version to use, ask for clarification)
+4. **No broken builds**: Never leave the codebase in a state where tests fail or builds break
 
 A script in your PATH is provided called `notify.sh`.
 
