@@ -80,3 +80,4 @@ homebrew_casks:
     binaries:
       - newline
       - trailingspace
+    skip_upload: auto
