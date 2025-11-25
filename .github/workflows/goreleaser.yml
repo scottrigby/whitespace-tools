@@ -1,0 +1,40 @@
+name: goreleaser
+
+on:
+  push:
+    tags:
+      - "v*.*.*"  # run only on semver-like tags
+
+permissions:
+  contents: write  # needed to create releases and commit casks
+
+jobs:
+  goreleaser:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # required by GoReleaser to resolve tags/commits
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: stable
+
+      - name: Set up TinyGo
+        uses: acifani/setup-tinygo@v1
+        with:
+          tinygo-version: "0.39.0"  # pin version
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: "~> v2"
+          args: release --clean
+        env:
+          # Since the tap is a different repo, use a fine‑grained PAT with Contents: write:
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+          GORELEASER_PARALLELISM: "4"
