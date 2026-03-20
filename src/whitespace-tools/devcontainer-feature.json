@@ -1,0 +1,16 @@
+{
+  "name": "Whitespace Tools",
+  "id": "whitespace-tools",
+  "version": "1.0.0",
+  "description": "Installs whitespace-tools: CLI tools to fix trailing whitespace and missing EOF newlines",
+  "documentationURL": "https://github.com/scottrigby/whitespace-tools",
+  "licenseURL": "https://github.com/scottrigby/whitespace-tools/blob/main/LICENSE",
+  "options": {
+    "version": {
+      "type": "string",
+      "default": "latest",
+      "description": "Version of whitespace-tools to install (e.g. 'v1.0.1' or 'latest')"
+    }
+  },
+  "installsAfter": ["ghcr.io/devcontainers/features/common-utils"]
+}
