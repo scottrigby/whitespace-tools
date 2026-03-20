@@ -7,7 +7,7 @@ Installs whitespace-tools: CLI tools to fix trailing whitespace and missing EOF 
 
 ```json
 "features": {
-    "ghcr.io/scottrigby/features/whitespace-tools:1": {}
+    "ghcr.io/scottrigby/whitespace-tools/whitespace-tools:1": {}
 }
 ```
 
