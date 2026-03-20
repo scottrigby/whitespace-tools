@@ -45,3 +45,57 @@ git clone https://github.com/scottrigby/whitespace-tools
 cd whitespace-tools
 make build
 ```
+
+## Devcontainer Feature
+
+Add to a claudeman profile or any devcontainer:
+
+```json
+{
+  "features": {
+    "ghcr.io/scottrigby/features/whitespace-tools:1": {}
+  }
+}
+```
+
+Or pin a specific version:
+
+```json
+{
+  "features": {
+    "ghcr.io/scottrigby/features/whitespace-tools:1": {
+      "version": "v1.0.1"
+    }
+  }
+}
+```
+
+### Publishing (manual steps)
+
+The feature source lives in `src/whitespace-tools/`. Two workflows handle publishing:
+
+1. **`goreleaser.yml`** — Builds binaries and creates GitHub Releases (triggered on `v*.*.*` tags).
+   The install.sh downloads from GitHub Releases, so releases must exist before the feature works.
+
+2. **`release.yml`** — Publishes the devcontainer feature to `ghcr.io/scottrigby/features/whitespace-tools`
+   (manually triggered via workflow_dispatch on the main branch).
+
+Steps to publish a new version:
+
+1. Set up a fine-grained GitHub PAT with `Contents: write` on the tap repo
+   (`scottrigby/homebrew-tap`) and add it as a repo secret named `GH_PAT`.
+
+2. Push code to `main`, then create a semver tag to trigger GoReleaser:
+
+   ```bash
+   git tag v1.0.1
+   git push origin v1.0.1
+   ```
+
+   This builds binaries and publishes GitHub Releases + Homebrew tap.
+
+3. After the release exists, trigger the devcontainer feature publish manually:
+   - GitHub → Actions → "Release dev container features" → Run workflow (main branch)
+   - This pushes the feature to `ghcr.io/scottrigby/features/whitespace-tools`
+
+4. The feature is then usable in devcontainer configs and claudeman profiles.
